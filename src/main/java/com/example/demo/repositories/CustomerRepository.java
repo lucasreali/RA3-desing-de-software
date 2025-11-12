@@ -1,7 +1,8 @@
+
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.Car;
+import com.example.demo.models.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
@@ -12,22 +13,22 @@ import org.springframework.stereotype.Repository;
 import javax.swing.text.html.parser.Entity;
 import java.util.UUID;
 
-public class CarRepository {
+public class CustomerRepository {
     EntityManager entityManager;
     EntityTransaction transaction;
 
-    public CarRepository(){
+    public CustomerRepository(){
         EntityManagerFactory emFactory =
-                Persistence.createEntityManagerFactory("carEmFactory");
+                Persistence.createEntityManagerFactory("customerEmFactory");
         entityManager = emFactory.createEntityManager();
         transaction = entityManager.getTransaction();
     }
 
-    public void save(Car car) {
+    public void save(Customer customer) {
         try {
             transaction.begin();
 
-            entityManager.persist(car);
+            entityManager.persist(customer);
 
             entityManager.flush();
             transaction.commit();

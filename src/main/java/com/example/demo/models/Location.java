@@ -26,8 +26,8 @@ public class Location {
     private LocalDateTime expiration;
 
     @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "car_id")
