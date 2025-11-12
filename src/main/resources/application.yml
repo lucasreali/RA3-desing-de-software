@@ -2,9 +2,9 @@ spring:
   application:
     name: demo
   datasource:
-    url: jdbc:mysql://localhost:3306/ra3-desing?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ra3-desing
-    password: ra3-desing
+    url: jdbc:mysql://localhost:3306/ra3-design?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ra3-design
+    password: ra3-design
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
