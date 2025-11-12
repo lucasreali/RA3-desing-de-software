@@ -33,7 +33,10 @@ public class Car {
 
     private String year;
 
-    @OneToMany(mappedBy = "cars")
+    @OneToMany(mappedBy = "car")
     private List<Location> locations;
+
+    @OneToMany(mappedBy = "car")
+    private List<Purchase> purchases;
 
 }

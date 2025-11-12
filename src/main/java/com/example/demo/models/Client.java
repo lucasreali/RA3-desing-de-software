@@ -30,6 +30,7 @@ public class Client {
     @OneToMany(mappedBy = "client")
     private List<Location> locations;
 
-
+    @OneToMany(mappedBy = "client")
+    private List<Purchase> purchases;
 
 }

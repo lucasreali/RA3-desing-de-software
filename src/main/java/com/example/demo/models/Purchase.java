@@ -29,7 +29,7 @@ public class Purchase {
 
     @ManyToOne
     @JoinColumn(name = "car_id")
-    private Car cars;
+    private Car car;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

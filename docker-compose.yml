@@ -6,8 +6,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ra3-design
-      MYSQL_USER: ra3-design
-      MYSQL_PASSWORD: ra3-design
     ports:
       - "3306:3306"
     volumes:
