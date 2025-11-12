@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/ra3-desing?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ra3-desing
+    password: ra3-desing
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
