@@ -2,16 +2,20 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.Car;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 
+@Repository
 public class CarRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public CarRepository() {
-        emFactory = Persistence.createEntityManagerFactory("carEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public CarRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public void save(Car car) {
@@ -34,7 +38,8 @@ public class CarRepository {
         try {
             transaction.begin();
 
-            Car car = findCarById(id);
+            Car car = findCarById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
             car.setBrand(brand);
             car.setModel(model);
             car.setCategory(category);
@@ -49,12 +54,16 @@ public class CarRepository {
         }
     }
 
-    public Car findCarById(String id) {
-        Query query =
-                entityManager.createQuery("select c from Car c where c.id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (Car) query.getSingleResult();
+    public Optional<Car> findCarById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select c from Car c where c.id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((Car) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -62,7 +71,8 @@ public class CarRepository {
 
         try {
             transaction.begin();
-            Car car = findCarById(id);
+            Car car = findCarById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
             entityManager.remove(car);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -71,8 +81,10 @@ public class CarRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 }

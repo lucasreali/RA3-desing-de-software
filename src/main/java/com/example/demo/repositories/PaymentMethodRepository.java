@@ -3,16 +3,20 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+@Repository
 public class PaymentMethodRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public PaymentMethodRepository() {
-        emFactory = Persistence.createEntityManagerFactory(
-                "paymentMethodEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public PaymentMethodRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public void save(PaymentMethod paymentMethod) {
@@ -34,7 +38,8 @@ public class PaymentMethodRepository {
         try {
             transaction.begin();
 
-            PaymentMethod paymentMethod = findPaymentMethodById(id);
+            PaymentMethod paymentMethod = findPaymentMethodById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
 
             transaction.commit();
         } catch (RuntimeException e) {
@@ -43,16 +48,20 @@ public class PaymentMethodRepository {
         }
     }
 
-    public PaymentMethod findPaymentMethodById(String id) {
-        Query query =
-                entityManager.createQuery("select p from PaymentMethod p " +
-                        "where" +
-                        " " +
-                        "p" +
-                        ".id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (PaymentMethod) query.getSingleResult();
+    public Optional<PaymentMethod> findPaymentMethodById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select p from PaymentMethod p " +
+                            "where" +
+                            " " +
+                            "p" +
+                            ".id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((PaymentMethod) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -60,7 +69,8 @@ public class PaymentMethodRepository {
 
         try {
             transaction.begin();
-            PaymentMethod paymentMethod = findPaymentMethodById(id);
+            PaymentMethod paymentMethod = findPaymentMethodById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
             entityManager.remove(paymentMethod);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -69,8 +79,10 @@ public class PaymentMethodRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 }

@@ -3,16 +3,20 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 
+@Repository
 public class PurchaseRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public PurchaseRepository(){
-        emFactory = Persistence.createEntityManagerFactory("purchaseEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public PurchaseRepository(EntityManager entityManager){
+        this.entityManager = entityManager;
     }
 
     public void save(Purchase purchase) {
@@ -34,7 +38,8 @@ public class PurchaseRepository {
         try {
             transaction.begin();
 
-            Purchase purchase = findPurchaseById(id);
+            Purchase purchase = findPurchaseById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));
             purchase.setInstallment(installment);
 
             transaction.commit();
@@ -44,13 +49,17 @@ public class PurchaseRepository {
         }
     }
 
-    public Purchase findPurchaseById(String id) {
-        Query query =
-                entityManager.createQuery("select p from Purchase p where p" +
-                        ".id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (Purchase) query.getSingleResult();
+    public Optional<Purchase> findPurchaseById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select p from Purchase p where p" +
+                            ".id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((Purchase) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -58,7 +67,8 @@ public class PurchaseRepository {
 
         try {
             transaction.begin();
-            Purchase purchase = findPurchaseById(id);
+            Purchase purchase = findPurchaseById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));
             entityManager.remove(purchase);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -67,9 +77,11 @@ public class PurchaseRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 }
 

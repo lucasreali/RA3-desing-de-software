@@ -3,15 +3,20 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+@Repository
 public class CustomerRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public CustomerRepository() {
-        emFactory = Persistence.createEntityManagerFactory("customerEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public CustomerRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public void save(Customer customer) {
@@ -33,7 +38,8 @@ public class CustomerRepository {
         try {
             transaction.begin();
 
-            Customer customer = findCustomerById(id);
+            Customer customer = findCustomerById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
             customer.setName(name);
             customer.setCpf(cpf);
             customer.setEmail(Email);
@@ -45,13 +51,17 @@ public class CustomerRepository {
         }
     }
 
-    public Customer findCustomerById(String id) {
-        Query query =
-                entityManager.createQuery("select c from Customer c where c" +
-                        ".id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (Customer) query.getSingleResult();
+    public Optional<Customer> findCustomerById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select c from Customer c where c" +
+                            ".id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((Customer) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -59,7 +69,8 @@ public class CustomerRepository {
 
         try {
             transaction.begin();
-            Customer customer = findCustomerById(id);
+            Customer customer = findCustomerById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
             entityManager.remove(customer);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -68,9 +79,11 @@ public class CustomerRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 
 }

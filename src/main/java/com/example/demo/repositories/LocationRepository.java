@@ -3,19 +3,21 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
-
+@Repository
 public class LocationRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public LocationRepository() {
-        emFactory = Persistence.createEntityManagerFactory("locationEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public LocationRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public void save(Location location) {
@@ -37,7 +39,8 @@ public class LocationRepository {
         try {
             transaction.begin();
 
-            Location location = findLocationById(id);
+            Location location = findLocationById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
             location.setCar(car);
             location.setValue(value);
             location.setExpiration(expiration);
@@ -49,13 +52,17 @@ public class LocationRepository {
         }
     }
 
-    public Location findLocationById(String id) {
-        Query query =
-                entityManager.createQuery("select l from Location l where l" +
-                        ".id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (Location) query.getSingleResult();
+    public Optional<Location> findLocationById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select l from Location l where l" +
+                            ".id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((Location) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -63,7 +70,8 @@ public class LocationRepository {
 
         try {
             transaction.begin();
-            Location location = findLocationById(id);
+            Location location = findLocationById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
             entityManager.remove(location);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -72,9 +80,11 @@ public class LocationRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 }
 

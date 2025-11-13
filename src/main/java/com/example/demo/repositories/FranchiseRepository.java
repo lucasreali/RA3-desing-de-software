@@ -3,16 +3,20 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
+import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+@Repository
 public class FranchiseRepository {
-    EntityManagerFactory emFactory;
-    EntityManager entityManager;
+    private final EntityManager entityManager;
 
-    public FranchiseRepository() {
-        emFactory =
-                Persistence.createEntityManagerFactory("franchiseEmFactory");
-        entityManager = emFactory.createEntityManager();
+    @Autowired
+    public FranchiseRepository(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
     public void save(Franchise franchise) {
@@ -34,7 +38,8 @@ public class FranchiseRepository {
         try {
             transaction.begin();
 
-            Franchise franchise = findFranchiseById(id);
+            Franchise franchise = findFranchiseById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
             franchise.setLocalization(localization);
 
             transaction.commit();
@@ -44,13 +49,17 @@ public class FranchiseRepository {
         }
     }
 
-    public Franchise findFranchiseById(String id) {
-        Query query =
-                entityManager.createQuery("select f from Franchise f where f" +
-                        ".id" +
-                        " = :id");
-        query.setParameter("id", id);
-        return (Franchise) query.getSingleResult();
+    public Optional<Franchise> findFranchiseById(String id) {
+        try {
+            Query query =
+                    entityManager.createQuery("select f from Franchise f where f" +
+                            ".id" +
+                            " = :id");
+            query.setParameter("id", id);
+            return Optional.of((Franchise) query.getSingleResult());
+        } catch (NoResultException e) {
+            return Optional.empty();
+        }
     }
 
     public void delete(String id) {
@@ -58,7 +67,8 @@ public class FranchiseRepository {
 
         try {
             transaction.begin();
-            Franchise franchise = findFranchiseById(id);
+            Franchise franchise = findFranchiseById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
             entityManager.remove(franchise);
             transaction.commit();
         } catch (RuntimeException e) {
@@ -67,9 +77,11 @@ public class FranchiseRepository {
         }
     }
 
+    @PreDestroy
     public void close() {
-        if (entityManager.isOpen()) entityManager.close();
-        if (emFactory.isOpen()) emFactory.close();
+        if (entityManager != null && entityManager.isOpen()) {
+            entityManager.close();
+        }
     }
 }
 
