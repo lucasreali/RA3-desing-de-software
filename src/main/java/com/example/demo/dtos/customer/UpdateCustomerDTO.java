@@ -2,9 +2,7 @@ package com.example.demo.dtos.customer;
 
 import com.example.demo.models.Customer;
 import jakarta.validation.constraints.Email;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter

@@ -26,6 +26,12 @@ public class LocationRepository {
         if (location.getCar() != null) {
             updateDlocation.setCar(location.getCar());
         }
+        if (location.getCustomer() != null) {
+            updateDlocation.setCustomer(location.getCustomer());
+        }
+        if (location.getPaymentMethod() != null) {
+            updateDlocation.setPaymentMethod(location.getPaymentMethod());
+        }
         if (location.getValue() != 0) {
             updateDlocation.setValue(location.getValue());
         }

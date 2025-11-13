@@ -14,16 +14,15 @@ public class CustomerRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // Use Spring-managed transactions instead of manual EntityTransaction
     @Transactional
     public void save(Customer customer) {
         entityManager.persist(customer);
     }
 
     @Transactional
-    public Customer edit(Customer customer) {
-        Customer updateDcustomer = findCustomerById(customer.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + customer.getId()));
+    public Customer edit(UUID id, Customer customer) {
+        Customer updateDcustomer = findCustomerById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
 
         if (customer.getName() != null) {
             updateDcustomer.setName(customer.getName());

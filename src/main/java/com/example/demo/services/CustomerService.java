@@ -6,17 +6,15 @@ import com.example.demo.dtos.customer.UpdateCustomerDTO;
 import com.example.demo.models.Customer;
 import com.example.demo.repositories.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
+@AllArgsConstructor
 public class CustomerService {
     private final CustomerRepository customerRepository;
-
-    public CustomerService(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
-    }
 
     public ResponseCustomerDTO create(CreateCustomerDTO createCustomerDTO) {
         Customer customer = createCustomerDTO.convertToEntity();
@@ -30,8 +28,8 @@ public class CustomerService {
         return new ResponseCustomerDTO(customer);
     }
 
-    public ResponseCustomerDTO update(String id, UpdateCustomerDTO updateCustomerDTO) {
-        Customer costumer = customerRepository.edit(updateCustomerDTO.convertToEntity());
+    public ResponseCustomerDTO update(UUID id, UpdateCustomerDTO updateCustomerDTO) {
+        Customer costumer = customerRepository.edit(id, updateCustomerDTO.convertToEntity());
         return new ResponseCustomerDTO(costumer);
     }
 
