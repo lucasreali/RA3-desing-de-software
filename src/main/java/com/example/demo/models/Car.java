@@ -39,4 +39,7 @@ public class Car {
     @OneToMany(mappedBy = "car")
     private List<Purchase> purchases;
 
+    @OneToMany(mappedBy = "car")
+    private List<Service> services;
+
 }

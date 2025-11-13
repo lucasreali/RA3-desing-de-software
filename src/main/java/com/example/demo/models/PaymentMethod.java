@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -20,5 +21,14 @@ public class PaymentMethod {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    private String name;
+
+    private String description;
+
+    @OneToMany(mappedBy = "paymentMethod")
+    private List<Purchase> purchases;
+
+    @OneToMany(mappedBy = "paymentMethod")
+    private List<Location> locations;
 
 }
