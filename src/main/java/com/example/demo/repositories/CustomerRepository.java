@@ -3,45 +3,74 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import javax.swing.text.html.parser.Entity;
-import java.util.UUID;
+import jakarta.persistence.*;
 
 public class CustomerRepository {
+    EntityManagerFactory emFactory;
     EntityManager entityManager;
-    EntityTransaction transaction;
 
-    public CustomerRepository(){
-        EntityManagerFactory emFactory =
-                Persistence.createEntityManagerFactory("customerEmFactory");
+    public CustomerRepository() {
+        emFactory = Persistence.createEntityManagerFactory("customerEmFactory");
         entityManager = emFactory.createEntityManager();
-        transaction = entityManager.getTransaction();
     }
 
     public void save(Customer customer) {
+        EntityTransaction transaction = entityManager.getTransaction();
         try {
             transaction.begin();
 
             entityManager.persist(customer);
 
-            entityManager.flush();
             transaction.commit();
         } catch (RuntimeException e) {
-            if (transaction != null) {
-                try {
-                    transaction.rollback();
-                } catch (RuntimeException nestedExcetion) {
-                }
-            }
+            if (transaction.isActive()) transaction.rollback();
             throw e;
-        } finally {
-            entityManager.close();
         }
     }
+
+    public void edit(String id, String name, String cpf, String Email) {
+        EntityTransaction transaction = entityManager.getTransaction();
+        try {
+            transaction.begin();
+
+            Customer customer = findCustomerById(id);
+            customer.setName(name);
+            customer.setCpf(cpf);
+            customer.setEmail(Email);
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public Customer findCustomerById(String id) {
+        Query query =
+                entityManager.createQuery("select c from Customer c where c" +
+                        ".id" +
+                        " = :id");
+        query.setParameter("id", id);
+        return (Customer) query.getSingleResult();
+    }
+
+    public void delete(String id) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        try {
+            transaction.begin();
+            Customer customer = findCustomerById(id);
+            entityManager.remove(customer);
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public void close() {
+        if (entityManager.isOpen()) entityManager.close();
+        if (emFactory.isOpen()) emFactory.close();
+    }
+
 }

@@ -3,46 +3,78 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import jakarta.persistence.*;
 
-import javax.swing.text.html.parser.Entity;
-import java.util.UUID;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 
 public class LocationRepository {
+    EntityManagerFactory emFactory;
     EntityManager entityManager;
-    EntityTransaction transaction;
 
-    public LocationRepository(){
-        EntityManagerFactory emFactory =
-                Persistence.createEntityManagerFactory("locationEmFactory");
+    public LocationRepository() {
+        emFactory = Persistence.createEntityManagerFactory("locationEmFactory");
         entityManager = emFactory.createEntityManager();
-        transaction = entityManager.getTransaction();
     }
 
     public void save(Location location) {
+        EntityTransaction transaction = entityManager.getTransaction();
         try {
             transaction.begin();
 
             entityManager.persist(location);
 
-            entityManager.flush();
             transaction.commit();
         } catch (RuntimeException e) {
-            if (transaction != null) {
-                try {
-                    transaction.rollback();
-                } catch (RuntimeException nestedExcetion) {
-                }
-            }
+            if (transaction.isActive()) transaction.rollback();
             throw e;
-        } finally {
-            entityManager.close();
         }
+    }
+
+    public void edit(String id, Car car, int value, LocalDateTime expiration) {
+        EntityTransaction transaction = entityManager.getTransaction();
+        try {
+            transaction.begin();
+
+            Location location = findLocationById(id);
+            location.setCar(car);
+            location.setValue(value);
+            location.setExpiration(expiration);
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public Location findLocationById(String id) {
+        Query query =
+                entityManager.createQuery("select l from Location l where l" +
+                        ".id" +
+                        " = :id");
+        query.setParameter("id", id);
+        return (Location) query.getSingleResult();
+    }
+
+    public void delete(String id) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        try {
+            transaction.begin();
+            Location location = findLocationById(id);
+            entityManager.remove(location);
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public void close() {
+        if (entityManager.isOpen()) entityManager.close();
+        if (emFactory.isOpen()) emFactory.close();
     }
 }
 

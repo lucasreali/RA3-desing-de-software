@@ -3,46 +3,73 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import javax.swing.text.html.parser.Entity;
-import java.util.UUID;
+import jakarta.persistence.*;
 
 public class FranchiseRepository {
+    EntityManagerFactory emFactory;
     EntityManager entityManager;
-    EntityTransaction transaction;
 
-    public FranchiseRepository(){
-        EntityManagerFactory emFactory =
+    public FranchiseRepository() {
+        emFactory =
                 Persistence.createEntityManagerFactory("franchiseEmFactory");
         entityManager = emFactory.createEntityManager();
-        transaction = entityManager.getTransaction();
     }
 
     public void save(Franchise franchise) {
+        EntityTransaction transaction = entityManager.getTransaction();
         try {
             transaction.begin();
 
             entityManager.persist(franchise);
 
-            entityManager.flush();
             transaction.commit();
         } catch (RuntimeException e) {
-            if (transaction != null) {
-                try {
-                    transaction.rollback();
-                } catch (RuntimeException nestedExcetion) {
-                }
-            }
+            if (transaction.isActive()) transaction.rollback();
             throw e;
-        } finally {
-            entityManager.close();
         }
+    }
+
+    public void edit(String id, String localization) {
+        EntityTransaction transaction = entityManager.getTransaction();
+        try {
+            transaction.begin();
+
+            Franchise franchise = findFranchiseById(id);
+            franchise.setLocalization(localization);
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public Franchise findFranchiseById(String id) {
+        Query query =
+                entityManager.createQuery("select f from Franchise f where f" +
+                        ".id" +
+                        " = :id");
+        query.setParameter("id", id);
+        return (Franchise) query.getSingleResult();
+    }
+
+    public void delete(String id) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        try {
+            transaction.begin();
+            Franchise franchise = findFranchiseById(id);
+            entityManager.remove(franchise);
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public void close() {
+        if (entityManager.isOpen()) entityManager.close();
+        if (emFactory.isOpen()) emFactory.close();
     }
 }
 

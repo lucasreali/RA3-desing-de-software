@@ -3,45 +3,71 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import jakarta.persistence.*;
 
-import javax.swing.text.html.parser.Entity;
-import java.util.UUID;
 
 public class ServiceRepository {
+    EntityManagerFactory emFactory;
     EntityManager entityManager;
-    EntityTransaction transaction;
 
-    public ServiceRepository(){
-        EntityManagerFactory emFactory =
-                Persistence.createEntityManagerFactory("serviceEmFactory");
+    public ServiceRepository() {
+        emFactory = Persistence.createEntityManagerFactory("serviceEmFactory");
         entityManager = emFactory.createEntityManager();
-        transaction = entityManager.getTransaction();
     }
 
     public void save(Service service) {
+        EntityTransaction transaction = entityManager.getTransaction();
         try {
             transaction.begin();
 
             entityManager.persist(service);
 
-            entityManager.flush();
             transaction.commit();
         } catch (RuntimeException e) {
-            if (transaction != null) {
-                try {
-                    transaction.rollback();
-                } catch (RuntimeException nestedExcetion) {
-                }
-            }
+            if (transaction.isActive()) transaction.rollback();
             throw e;
-        } finally {
-            entityManager.close();
         }
+    }
+
+    public void edit(String id) {
+        EntityTransaction transaction = entityManager.getTransaction();
+        try {
+            transaction.begin();
+
+            Service service = findServiceById(id);
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public Service findServiceById(String id) {
+        Query query =
+                entityManager.createQuery("select s from Service s where s" +
+                        ".id" +
+                        " = :id");
+        query.setParameter("id", id);
+        return (Service) query.getSingleResult();
+    }
+
+    public void delete(String id) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        try {
+            transaction.begin();
+            Service service = findServiceById(id);
+            entityManager.remove(service);
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) transaction.rollback();
+            throw e;
+        }
+    }
+
+    public void close() {
+        if (entityManager.isOpen()) entityManager.close();
+        if (emFactory.isOpen()) emFactory.close();
     }
 }
