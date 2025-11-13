@@ -1,62 +1,47 @@
-
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.*;
-import jakarta.annotation.PreDestroy;
+import com.example.demo.models.Customer;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class CustomerRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public CustomerRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
+    // Use Spring-managed transactions instead of manual EntityTransaction
+    @Transactional
     public void save(Customer customer) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(customer);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(customer);
     }
 
-    public void edit(String id, String name, String cpf, String Email) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public Customer edit(Customer customer) {
+        Customer updateDcustomer = findCustomerById(customer.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + customer.getId()));
 
-            Customer customer = findCustomerById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
-            customer.setName(name);
-            customer.setCpf(cpf);
-            customer.setEmail(Email);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (customer.getName() != null) {
+            updateDcustomer.setName(customer.getName());
         }
+        if (customer.getCpf() != null) {
+            updateDcustomer.setCpf(customer.getCpf());
+        }
+        if (customer.getEmail() != null) {
+            updateDcustomer.setEmail(customer.getEmail());
+        }
+
+        return updateDcustomer;
     }
 
-    public Optional<Customer> findCustomerById(String id) {
+    public Optional<Customer> findCustomerById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select c from Customer c where c" +
-                            ".id" +
-                            " = :id");
+                    entityManager.createQuery("select c from Customer c where c.id = :id");
             query.setParameter("id", id);
             return Optional.of((Customer) query.getSingleResult());
         } catch (NoResultException e) {
@@ -64,26 +49,10 @@ public class CustomerRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Customer customer = findCustomerById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
-            entityManager.remove(customer);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+    @Transactional
+    public void delete(UUID id) {
+        Customer customer = findCustomerById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
+        entityManager.remove(customer);
     }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
-    }
-
 }

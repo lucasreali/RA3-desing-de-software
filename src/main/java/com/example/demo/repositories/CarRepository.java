@@ -2,63 +2,54 @@ package com.example.demo.repositories;
 
 
 import com.example.demo.models.Car;
-import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class CarRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public CarRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
+    @Transactional
     public void save(Car car) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(car);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(car);
     }
 
-    public void edit(String id, String brand, String model, String category,
-                     String color, int price, String year) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public Car edit(Car car) {
+        Car updateDcar = findCarById(car.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + car.getId()));
 
-            Car car = findCarById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
-            car.setBrand(brand);
-            car.setModel(model);
-            car.setCategory(category);
-            car.setColor(color);
-            car.setPrice(price);
-            car.setYear(year);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (car.getBrand() != null) {
+            updateDcar.setBrand(car.getBrand());
         }
+        if (car.getModel() != null) {
+            updateDcar.setModel(car.getModel());
+        }
+        if (car.getCategory() != null) {
+            updateDcar.setCategory(car.getCategory());
+        }
+        if (car.getColor() != null) {
+            updateDcar.setColor(car.getColor());
+        }
+        if (car.getPrice() != 0) {
+            updateDcar.setPrice(car.getPrice());
+        }
+        if (car.getYear() != null) {
+            updateDcar.setYear(car.getYear());
+        }
+
+        return updateDcar;
     }
 
-    public Optional<Car> findCarById(String id) {
+    public Optional<Car> findCarById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select c from Car c where c.id" +
-                            " = :id");
+                    entityManager.createQuery("select c from Car c where c.id = :id");
             query.setParameter("id", id);
             return Optional.of((Car) query.getSingleResult());
         } catch (NoResultException e) {
@@ -66,25 +57,10 @@ public class CarRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Car car = findCarById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
-            entityManager.remove(car);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
-    }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
+    @Transactional
+    public void delete(UUID id) {
+        Car car = findCarById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
+        entityManager.remove(car);
     }
 }

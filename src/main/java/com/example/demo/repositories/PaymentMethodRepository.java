@@ -1,62 +1,43 @@
-
 package com.example.demo.repositories;
 
 
 import com.example.demo.models.*;
-import jakarta.annotation.PreDestroy;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class PaymentMethodRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public PaymentMethodRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
+    @Transactional
     public void save(PaymentMethod paymentMethod) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(paymentMethod);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(paymentMethod);
     }
 
-    public void edit(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public PaymentMethod edit(PaymentMethod paymentMethod) {
+        PaymentMethod updateDpaymentMethod = findPaymentMethodById(paymentMethod.getId())
+                .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + paymentMethod.getId()));
 
-            PaymentMethod paymentMethod = findPaymentMethodById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (paymentMethod.getName() != null) {
+            updateDpaymentMethod.setName(paymentMethod.getName());
         }
+        if (paymentMethod.getDescription() != null) {
+            updateDpaymentMethod.setDescription(paymentMethod.getDescription());
+        }
+
+        return updateDpaymentMethod;
     }
 
-    public Optional<PaymentMethod> findPaymentMethodById(String id) {
+    public Optional<PaymentMethod> findPaymentMethodById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select p from PaymentMethod p " +
-                            "where" +
-                            " " +
-                            "p" +
-                            ".id" +
-                            " = :id");
+                    entityManager.createQuery("select p from PaymentMethod p where p.id = :id");
             query.setParameter("id", id);
             return Optional.of((PaymentMethod) query.getSingleResult());
         } catch (NoResultException e) {
@@ -64,25 +45,10 @@ public class PaymentMethodRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            PaymentMethod paymentMethod = findPaymentMethodById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
-            entityManager.remove(paymentMethod);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
-    }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
+    @Transactional
+    public void delete(UUID id) {
+        PaymentMethod paymentMethod = findPaymentMethodById(id)
+                .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
+        entityManager.remove(paymentMethod);
     }
 }

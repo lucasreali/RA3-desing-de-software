@@ -1,60 +1,40 @@
-
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.*;
-import jakarta.annotation.PreDestroy;
+import com.example.demo.models.Purchase;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class PurchaseRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public PurchaseRepository(EntityManager entityManager){
-        this.entityManager = entityManager;
-    }
-
+    @Transactional
     public void save(Purchase purchase) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(purchase);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(purchase);
     }
 
-    public void edit(String id, int installment) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public Purchase edit(Purchase purchase) {
+        Purchase updateDpurchase = findPurchaseById(purchase.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + purchase.getId()));
 
-            Purchase purchase = findPurchaseById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));
-            purchase.setInstallment(installment);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (purchase.getInstallment() != 0) {
+            updateDpurchase.setInstallment(purchase.getInstallment());
         }
+
+        return updateDpurchase;
     }
 
-    public Optional<Purchase> findPurchaseById(String id) {
+    public Optional<Purchase> findPurchaseById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select p from Purchase p where p" +
-                            ".id" +
-                            " = :id");
+                    entityManager.createQuery("select p from Purchase p where p.id = :id");
             query.setParameter("id", id);
             return Optional.of((Purchase) query.getSingleResult());
         } catch (NoResultException e) {
@@ -62,26 +42,10 @@ public class PurchaseRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Purchase purchase = findPurchaseById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));
-            entityManager.remove(purchase);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
-    }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
+    @Transactional
+    public void delete(UUID id) {
+        Purchase purchase = findPurchaseById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));
+        entityManager.remove(purchase);
     }
 }
-

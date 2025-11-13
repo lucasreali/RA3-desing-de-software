@@ -1,60 +1,40 @@
-
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.*;
-import jakarta.annotation.PreDestroy;
+import com.example.demo.models.Franchise;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class FranchiseRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public FranchiseRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
+    @Transactional
     public void save(Franchise franchise) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(franchise);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(franchise);
     }
 
-    public void edit(String id, String localization) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public Franchise edit(Franchise franchise) {
+        Franchise updateDfranchise = findFranchiseById(franchise.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + franchise.getId()));
 
-            Franchise franchise = findFranchiseById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
-            franchise.setLocalization(localization);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (franchise.getLocalization() != null) {
+            updateDfranchise.setLocalization(franchise.getLocalization());
         }
+
+        return updateDfranchise;
     }
 
-    public Optional<Franchise> findFranchiseById(String id) {
+    public Optional<Franchise> findFranchiseById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select f from Franchise f where f" +
-                            ".id" +
-                            " = :id");
+                    entityManager.createQuery("select f from Franchise f where f.id = :id");
             query.setParameter("id", id);
             return Optional.of((Franchise) query.getSingleResult());
         } catch (NoResultException e) {
@@ -62,26 +42,10 @@ public class FranchiseRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Franchise franchise = findFranchiseById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
-            entityManager.remove(franchise);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
-    }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
+    @Transactional
+    public void delete(UUID id) {
+        Franchise franchise = findFranchiseById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
+        entityManager.remove(franchise);
     }
 }
-

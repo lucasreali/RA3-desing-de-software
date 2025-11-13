@@ -1,59 +1,49 @@
-
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.*;
-import jakarta.annotation.PreDestroy;
+import com.example.demo.models.Service;
 import jakarta.persistence.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class ServiceRepository {
-    private final EntityManager entityManager;
+    @PersistenceContext
+    private EntityManager entityManager;
 
-    @Autowired
-    public ServiceRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
+    @Transactional
     public void save(Service service) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
-
-            entityManager.persist(service);
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
+        entityManager.persist(service);
     }
 
-    public void edit(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        try {
-            transaction.begin();
+    @Transactional
+    public Service edit(Service service) {
+        Service updateDservice = findServiceById(service.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + service.getId()));
 
-            Service service = findServiceById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + id));
-
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
+        if (service.getName() != null) {
+            updateDservice.setName(service.getName());
         }
+        if (service.getDescription() != null) {
+            updateDservice.setDescription(service.getDescription());
+        }
+        if (service.getPrice() != 0) {
+            updateDservice.setPrice(service.getPrice());
+        }
+        if (service.getCar() != null) {
+            updateDservice.setCar(service.getCar());
+        }
+
+        return updateDservice;
     }
 
-    public Optional<Service> findServiceById(String id) {
+    public Optional<Service> findServiceById(UUID id) {
         try {
             Query query =
-                    entityManager.createQuery("select s from Service s where s" +
-                            ".id" +
-                            " = :id");
+                    entityManager.createQuery("select s from Service s where s.id = :id");
             query.setParameter("id", id);
             return Optional.of((Service) query.getSingleResult());
         } catch (NoResultException e) {
@@ -61,25 +51,10 @@ public class ServiceRepository {
         }
     }
 
-    public void delete(String id) {
-        EntityTransaction transaction = entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Service service = findServiceById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + id));
-            entityManager.remove(service);
-            transaction.commit();
-        } catch (RuntimeException e) {
-            if (transaction.isActive()) transaction.rollback();
-            throw e;
-        }
-    }
-
-    @PreDestroy
-    public void close() {
-        if (entityManager != null && entityManager.isOpen()) {
-            entityManager.close();
-        }
+    @Transactional
+    public void delete(UUID id) {
+        Service service = findServiceById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + id));
+        entityManager.remove(service);
     }
 }
