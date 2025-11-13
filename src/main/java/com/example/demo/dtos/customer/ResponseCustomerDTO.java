@@ -13,6 +13,7 @@ public class ResponseCustomerDTO {
     private final String name;
     private final String cpf;
     private final String email;
+    private final
 
     public ResponseCustomerDTO(Customer customer) {
         id = customer.getId();
