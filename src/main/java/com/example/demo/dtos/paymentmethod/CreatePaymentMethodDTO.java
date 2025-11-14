@@ -2,6 +2,7 @@ package com.example.demo.dtos.paymentmethod;
 
 import com.example.demo.models.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import lombok.Setter;
 @Setter
 public class CreatePaymentMethodDTO {
 
+    @NotNull
     @NotBlank(message = "Name is required")
     private String name;
 
