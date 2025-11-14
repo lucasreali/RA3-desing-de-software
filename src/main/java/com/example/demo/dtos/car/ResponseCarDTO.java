@@ -7,9 +7,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * DTO de resposta para Car
- */
 @Getter
 @Setter
 public class ResponseCarDTO {

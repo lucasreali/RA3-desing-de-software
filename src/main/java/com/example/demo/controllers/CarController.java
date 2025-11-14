@@ -35,7 +35,7 @@ public class CarController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseCarDTO> update(@PathVariable String id,
+    public ResponseEntity<ResponseCarDTO> update(@PathVariable UUID id,
                                                @Valid @RequestBody
     UpdateCarDTO updateCarDTO) {
         ResponseCarDTO responseCarDTO = carService.update(id,

@@ -31,10 +31,8 @@ public class JpaConfig {
         factory.setJpaVendorAdapter(vendorAdapter);
         factory.setPackagesToScan("com.example.demo.models");
 
-        // Necessário para inicializar o factory
         factory.afterPropertiesSet();
 
-        // Aqui retornamos o EntityManagerFactory REAL
         return factory.getObject();
     }
 }

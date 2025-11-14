@@ -1,5 +1,8 @@
 package com.example.demo.controllers;
 
+import com.example.demo.dtos.service.CreateServiceDTO;
+import com.example.demo.dtos.service.ResponseServiceDTO;
+import com.example.demo.dtos.service.UpdateServiceDTO;
 import com.example.demo.services.ServiceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

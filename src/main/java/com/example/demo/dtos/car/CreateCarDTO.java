@@ -31,7 +31,6 @@ public class CreateCarDTO {
     private String color;
 
     @NotNull
-    @NotBlank
     private int price;
 
     @NotNull
