@@ -1,8 +1,10 @@
 package com.example.demo.repositories;
 
-
 import com.example.demo.models.Car;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityTransaction;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,53 +12,85 @@ import java.util.UUID;
 
 @Repository
 public class CarRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
+
+    private final EntityManagerFactory emf;
+
+    public CarRepository(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
 
     public void save(Car car) {
-        entityManager.persist(car);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+            em.persist(car);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
     }
 
     public Car edit(Car car) {
-        Car updateDcar = findCarById(car.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + car.getId()));
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
 
-        if (car.getBrand() != null) {
-            updateDcar.setBrand(car.getBrand());
-        }
-        if (car.getModel() != null) {
-            updateDcar.setModel(car.getModel());
-        }
-        if (car.getCategory() != null) {
-            updateDcar.setCategory(car.getCategory());
-        }
-        if (car.getColor() != null) {
-            updateDcar.setColor(car.getColor());
-        }
-        if (car.getPrice() != 0) {
-            updateDcar.setPrice(car.getPrice());
-        }
-        if (car.getYear() != null) {
-            updateDcar.setYear(car.getYear());
-        }
+        try (em) {
+            tx.begin();
 
-        return updateDcar;
+            Car updatedCar = em.find(Car.class, car.getId());
+
+            if (updatedCar == null) {
+                throw new EntityNotFoundException("Car not found with id: " + car.getId());
+            }
+
+            if (car.getBrand() != null) updatedCar.setBrand(car.getBrand());
+            if (car.getModel() != null) updatedCar.setModel(car.getModel());
+            if (car.getCategory() != null) updatedCar.setCategory(car.getCategory());
+            if (car.getColor() != null) updatedCar.setColor(car.getColor());
+            if (car.getPrice() != 0) updatedCar.setPrice(car.getPrice());
+            if (car.getYear() != null) updatedCar.setYear(car.getYear());
+
+            tx.commit();
+            return updatedCar;
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+
+        }
     }
 
     public Optional<Car> findCarById(UUID id) {
-        try {
-            Query query =
-                    entityManager.createQuery("select c from Car c where c.id = :id");
-            query.setParameter("id", id);
-            return Optional.of((Car) query.getSingleResult());
-        } catch (NoResultException e) {
-            return Optional.empty();
+
+        try (EntityManager em = emf.createEntityManager()) {
+            Car car = em.find(Car.class, id);
+            return Optional.ofNullable(car);
         }
     }
 
     public void delete(UUID id) {
-        Car car = findCarById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));
-        entityManager.remove(car);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+
+            Car car = em.find(Car.class, id);
+
+            if (car == null) {
+                throw new EntityNotFoundException("Car not found with id: " + id);
+            }
+
+            em.remove(car);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
     }
 }

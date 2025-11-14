@@ -1,8 +1,10 @@
 package com.example.demo.repositories;
 
-
 import com.example.demo.models.PaymentMethod;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityTransaction;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,41 +12,82 @@ import java.util.UUID;
 
 @Repository
 public class PaymentMethodRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
+
+    private final EntityManagerFactory emf;
+
+    public PaymentMethodRepository(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
 
     public void save(PaymentMethod paymentMethod) {
-        entityManager.persist(paymentMethod);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+            em.persist(paymentMethod);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
     }
 
     public PaymentMethod edit(PaymentMethod paymentMethod) {
-        PaymentMethod updateDpaymentMethod = findPaymentMethodById(paymentMethod.getId())
-                .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + paymentMethod.getId()));
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
 
-        if (paymentMethod.getName() != null) {
-            updateDpaymentMethod.setName(paymentMethod.getName());
-        }
-        if (paymentMethod.getDescription() != null) {
-            updateDpaymentMethod.setDescription(paymentMethod.getDescription());
-        }
+        try (em) {
+            tx.begin();
 
-        return updateDpaymentMethod;
+            PaymentMethod updatedPaymentMethod = em.find(PaymentMethod.class, paymentMethod.getId());
+
+            if (updatedPaymentMethod == null) {
+                throw new EntityNotFoundException("PaymentMethod not found with id: " + paymentMethod.getId());
+            }
+
+            if (paymentMethod.getName() != null) updatedPaymentMethod.setName(paymentMethod.getName());
+            if (paymentMethod.getDescription() != null) updatedPaymentMethod.setDescription(paymentMethod.getDescription());
+
+            tx.commit();
+            return updatedPaymentMethod;
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+
+        }
     }
 
     public Optional<PaymentMethod> findPaymentMethodById(UUID id) {
-        try {
-            Query query =
-                    entityManager.createQuery("select p from PaymentMethod p where p.id = :id");
-            query.setParameter("id", id);
-            return Optional.of((PaymentMethod) query.getSingleResult());
-        } catch (NoResultException e) {
-            return Optional.empty();
+
+        try (EntityManager em = emf.createEntityManager()) {
+            PaymentMethod paymentMethod = em.find(PaymentMethod.class, id);
+            return Optional.ofNullable(paymentMethod);
         }
     }
 
     public void delete(UUID id) {
-        PaymentMethod paymentMethod = findPaymentMethodById(id)
-                .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));
-        entityManager.remove(paymentMethod);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+
+            PaymentMethod paymentMethod = em.find(PaymentMethod.class, id);
+
+            if (paymentMethod == null) {
+                throw new EntityNotFoundException("PaymentMethod not found with id: " + id);
+            }
+
+            em.remove(paymentMethod);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+
+        }
     }
 }

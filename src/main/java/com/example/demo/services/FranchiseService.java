@@ -7,7 +7,6 @@ import com.example.demo.models.Franchise;
 import com.example.demo.repositories.FranchiseRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -19,21 +18,18 @@ public class FranchiseService {
         this.franchiseRepository = franchiseRepository;
     }
 
-    @Transactional
     public ResponseFranchiseDTO create(CreateFranchiseDTO createFranchiseDTO) {
         Franchise franchise = createFranchiseDTO.convertToEntity();
         franchiseRepository.save(franchise);
         return new ResponseFranchiseDTO(franchise);
     }
 
-    @Transactional(readOnly = true)
     public ResponseFranchiseDTO findById(UUID id) {
         Franchise franchise = franchiseRepository.findFranchiseById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));
         return new ResponseFranchiseDTO(franchise);
     }
 
-    @Transactional
     public ResponseFranchiseDTO update(UUID id, UpdateFranchiseDTO updateFranchiseDTO) {
         Franchise franchise = updateFranchiseDTO.convertToEntity();
         franchise.setId(id);
@@ -41,7 +37,6 @@ public class FranchiseService {
         return new ResponseFranchiseDTO(updatedFranchise);
     }
 
-    @Transactional
     public void delete(UUID id) {
         franchiseRepository.delete(id);
     }

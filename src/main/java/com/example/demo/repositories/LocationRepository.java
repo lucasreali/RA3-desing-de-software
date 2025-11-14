@@ -1,8 +1,10 @@
 package com.example.demo.repositories;
 
-
 import com.example.demo.models.Location;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityTransaction;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,47 +12,85 @@ import java.util.UUID;
 
 @Repository
 public class LocationRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
+
+    private final EntityManagerFactory emf;
+
+    public LocationRepository(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
 
     public void save(Location location) {
-        entityManager.persist(location);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+            em.persist(location);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        }
     }
 
     public Location edit(Location location) {
-        Location updateDlocation = findLocationById(location.getId()).orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + location.getId()));
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
 
-        if (location.getCar() != null) {
-            updateDlocation.setCar(location.getCar());
-        }
-        if (location.getCustomer() != null) {
-            updateDlocation.setCustomer(location.getCustomer());
-        }
-        if (location.getPaymentMethod() != null) {
-            updateDlocation.setPaymentMethod(location.getPaymentMethod());
-        }
-        if (location.getValue() != 0) {
-            updateDlocation.setValue(location.getValue());
-        }
-        if (location.getExpiration() != null) {
-            updateDlocation.setExpiration(location.getExpiration());
-        }
+        try (em) {
+            tx.begin();
 
-        return updateDlocation;
+            Location updatedLocation = em.find(Location.class, location.getId());
+
+            if (updatedLocation == null) {
+                throw new EntityNotFoundException("Location not found with id: " + location.getId());
+            }
+
+            if (location.getCar() != null) updatedLocation.setCar(location.getCar());
+            if (location.getCustomer() != null) updatedLocation.setCustomer(location.getCustomer());
+            if (location.getPaymentMethod() != null) updatedLocation.setPaymentMethod(location.getPaymentMethod());
+            if (location.getValue() != 0) updatedLocation.setValue(location.getValue());
+            if (location.getExpiration() != null) updatedLocation.setExpiration(location.getExpiration());
+
+            tx.commit();
+            return updatedLocation;
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+
+        }
     }
 
     public Optional<Location> findLocationById(UUID id) {
-        try {
-            Query query = entityManager.createQuery("select l from Location l where l.id = :id");
-            query.setParameter("id", id);
-            return Optional.of((Location) query.getSingleResult());
-        } catch (NoResultException e) {
-            return Optional.empty();
+
+        try (EntityManager em = emf.createEntityManager()) {
+            Location location = em.find(Location.class, id);
+            return Optional.ofNullable(location);
         }
     }
 
     public void delete(UUID id) {
-        Location location = findLocationById(id).orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
-        entityManager.remove(location);
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction tx = em.getTransaction();
+
+        try (em) {
+            tx.begin();
+
+            Location location = em.find(Location.class, id);
+
+            if (location == null) {
+                throw new EntityNotFoundException("Location not found with id: " + id);
+            }
+
+            em.remove(location);
+
+            tx.commit();
+
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+
+        }
     }
 }

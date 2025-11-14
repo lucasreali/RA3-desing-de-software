@@ -50,7 +50,6 @@ public class LocationService {
         return new ResponseLocationDTO(location);
     }
 
-    @Transactional
     public ResponseLocationDTO update(UUID id, UpdateLocationDTO updateLocationDTO) {
         Location partial = new Location();
         partial.setId(id);
@@ -81,7 +80,6 @@ public class LocationService {
         return new ResponseLocationDTO(updated);
     }
 
-    @Transactional
     public void delete(UUID id) {
         locationRepository.delete(id);
     }
