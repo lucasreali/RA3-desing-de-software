@@ -7,9 +7,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * DTO de resposta para PaymentMethod
- */
+
 @Getter
 @Setter
 public class ResponsePaymentMethodDTO {
