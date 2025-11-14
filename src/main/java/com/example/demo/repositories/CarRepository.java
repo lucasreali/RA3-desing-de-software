@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Car;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class CarRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Car car) {
         entityManager.persist(car);
     }
 
-    @Transactional
     public Car edit(Car car) {
         Car updateDcar = findCarById(car.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + car.getId()));
@@ -57,7 +54,6 @@ public class CarRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Car car = findCarById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + id));

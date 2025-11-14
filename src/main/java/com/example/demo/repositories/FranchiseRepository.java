@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Franchise;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class FranchiseRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Franchise franchise) {
         entityManager.persist(franchise);
     }
 
-    @Transactional
     public Franchise edit(Franchise franchise) {
         Franchise updateDfranchise = findFranchiseById(franchise.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + franchise.getId()));
@@ -42,7 +39,6 @@ public class FranchiseRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Franchise franchise = findFranchiseById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Franchise not found with id: " + id));

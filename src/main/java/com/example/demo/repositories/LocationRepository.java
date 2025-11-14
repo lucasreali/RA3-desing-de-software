@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Location;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class LocationRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Location location) {
         entityManager.persist(location);
     }
 
-    @Transactional
     public Location edit(Location location) {
         Location updateDlocation = findLocationById(location.getId()).orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + location.getId()));
 
@@ -52,7 +49,6 @@ public class LocationRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Location location = findLocationById(id).orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
         entityManager.remove(location);

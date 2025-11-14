@@ -1,10 +1,9 @@
 package com.example.demo.repositories;
 
 
-import com.example.demo.models.*;
+import com.example.demo.models.PaymentMethod;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class PaymentMethodRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(PaymentMethod paymentMethod) {
         entityManager.persist(paymentMethod);
     }
 
-    @Transactional
     public PaymentMethod edit(PaymentMethod paymentMethod) {
         PaymentMethod updateDpaymentMethod = findPaymentMethodById(paymentMethod.getId())
                 .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + paymentMethod.getId()));
@@ -45,7 +42,6 @@ public class PaymentMethodRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         PaymentMethod paymentMethod = findPaymentMethodById(id)
                 .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + id));

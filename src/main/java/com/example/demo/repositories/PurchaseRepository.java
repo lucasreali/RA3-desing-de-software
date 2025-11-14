@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Purchase;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class PurchaseRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Purchase purchase) {
         entityManager.persist(purchase);
     }
 
-    @Transactional
     public Purchase edit(Purchase purchase) {
         Purchase updateDpurchase = findPurchaseById(purchase.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + purchase.getId()));
@@ -42,7 +39,6 @@ public class PurchaseRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Purchase purchase = findPurchaseById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Purchase not found with id: " + id));

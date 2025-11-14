@@ -1,5 +1,6 @@
 package com.example.demo.dtos.location;
 
+import com.example.demo.models.Location;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,5 +15,14 @@ public class UpdateLocationDTO {
     private UUID customerId;
     private UUID carId;
     private UUID paymentMethodId;
+
+    public Location convertToEntity() {
+        Location location = new Location();
+
+        location.setValue(value);
+        location.setExpiration(expiration);
+
+        return location;
+    }
 }
 

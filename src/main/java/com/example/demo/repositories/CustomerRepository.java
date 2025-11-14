@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Customer;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,15 +13,13 @@ public class CustomerRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Customer customer) {
         entityManager.persist(customer);
     }
 
-    @Transactional
-    public Customer edit(UUID id, Customer customer) {
-        Customer updateDcustomer = findCustomerById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));
+    public Customer edit(Customer customer) {
+        Customer updateDcustomer = findCustomerById(customer.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + customer.getId()));
 
         if (customer.getName() != null) {
             updateDcustomer.setName(customer.getName());
@@ -48,7 +45,6 @@ public class CustomerRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Customer customer = findCustomerById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + id));

@@ -14,12 +14,10 @@ import com.example.demo.repositories.PaymentMethodRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-/**
- * Service para gerenciar operações de Location
- */
 @Service
 @AllArgsConstructor
 public class LocationService {
@@ -28,13 +26,12 @@ public class LocationService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final CarRepository carRepository;
 
+    @Transactional
     public ResponseLocationDTO create(CreateLocationDTO createLocationDTO) {
         Customer customer = customerRepository.findCustomerById(createLocationDTO.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + createLocationDTO.getCustomerId()));
-
         Car car = carRepository.findCarById(createLocationDTO.getCarId())
                 .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + createLocationDTO.getCarId()));
-
         PaymentMethod paymentMethod = paymentMethodRepository.findPaymentMethodById(createLocationDTO.getPaymentMethodId())
                 .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + createLocationDTO.getPaymentMethodId()));
 
@@ -44,7 +41,6 @@ public class LocationService {
         location.setPaymentMethod(paymentMethod);
 
         locationRepository.save(location);
-
         return new ResponseLocationDTO(location);
     }
 
@@ -54,39 +50,38 @@ public class LocationService {
         return new ResponseLocationDTO(location);
     }
 
+    @Transactional
     public ResponseLocationDTO update(UUID id, UpdateLocationDTO updateLocationDTO) {
-        Location location = locationRepository.findLocationById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Location not found with id: " + id));
+        Location partial = new Location();
+        partial.setId(id);
 
         if (updateLocationDTO.getValue() != null) {
-            location.setValue(updateLocationDTO.getValue());
+            partial.setValue(updateLocationDTO.getValue());
         }
         if (updateLocationDTO.getExpiration() != null) {
-            location.setExpiration(updateLocationDTO.getExpiration());
+            partial.setExpiration(updateLocationDTO.getExpiration());
         }
-
         if (updateLocationDTO.getCustomerId() != null) {
             Customer customer = customerRepository.findCustomerById(updateLocationDTO.getCustomerId())
                     .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + updateLocationDTO.getCustomerId()));
-            location.setCustomer(customer);
+            partial.setCustomer(customer);
         }
-
         if (updateLocationDTO.getCarId() != null) {
             Car car = carRepository.findCarById(updateLocationDTO.getCarId())
                     .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + updateLocationDTO.getCarId()));
-            location.setCar(car);
+            partial.setCar(car);
         }
-
         if (updateLocationDTO.getPaymentMethodId() != null) {
             PaymentMethod paymentMethod = paymentMethodRepository.findPaymentMethodById(updateLocationDTO.getPaymentMethodId())
                     .orElseThrow(() -> new EntityNotFoundException("PaymentMethod not found with id: " + updateLocationDTO.getPaymentMethodId()));
-            location.setPaymentMethod(paymentMethod);
+            partial.setPaymentMethod(paymentMethod);
         }
 
-        Location updatedLocation = locationRepository.edit(location);
-        return new ResponseLocationDTO(updatedLocation);
+        Location updated = locationRepository.edit(partial);
+        return new ResponseLocationDTO(updated);
     }
 
+    @Transactional
     public void delete(UUID id) {
         locationRepository.delete(id);
     }

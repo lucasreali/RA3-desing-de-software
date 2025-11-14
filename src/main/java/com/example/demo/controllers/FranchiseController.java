@@ -33,7 +33,7 @@ public class FranchiseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResponseFranchiseDTO> update(@PathVariable String id, @Valid @RequestBody UpdateFranchiseDTO updateFranchiseDTO) {
+    public ResponseEntity<ResponseFranchiseDTO> update(@PathVariable UUID id, @Valid @RequestBody UpdateFranchiseDTO updateFranchiseDTO) {
         ResponseFranchiseDTO responseFranchiseDTO = franchiseService.update(id, updateFranchiseDTO);
         return ResponseEntity.ok(responseFranchiseDTO);
     }

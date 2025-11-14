@@ -4,7 +4,6 @@ package com.example.demo.repositories;
 import com.example.demo.models.Service;
 import jakarta.persistence.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -14,12 +13,10 @@ public class ServiceRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Transactional
     public void save(Service service) {
         entityManager.persist(service);
     }
 
-    @Transactional
     public Service edit(Service service) {
         Service updateDservice = findServiceById(service.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + service.getId()));
@@ -51,7 +48,6 @@ public class ServiceRepository {
         }
     }
 
-    @Transactional
     public void delete(UUID id) {
         Service service = findServiceById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Service not found with id: " + id));
