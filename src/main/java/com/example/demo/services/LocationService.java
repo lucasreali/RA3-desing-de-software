@@ -26,7 +26,6 @@ public class LocationService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final CarRepository carRepository;
 
-    @Transactional
     public ResponseLocationDTO create(CreateLocationDTO createLocationDTO) {
         Customer customer = customerRepository.findCustomerById(createLocationDTO.getCustomerId())
                 .orElseThrow(() -> new EntityNotFoundException("Customer not found with id: " + createLocationDTO.getCustomerId()));
