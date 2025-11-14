@@ -4,8 +4,10 @@ import com.example.demo.dtos.car.CreateCarDTO;
 import com.example.demo.dtos.car.ResponseCarDTO;
 import com.example.demo.dtos.car.UpdateCarDTO;
 
+import com.example.demo.dtos.customer.ResponseCustomerDTO;
 import com.example.demo.models.Car;
 
+import com.example.demo.models.Customer;
 import com.example.demo.repositories.CarRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -33,11 +35,12 @@ public class CarService {
         return new ResponseCarDTO(car);
     }
 
-    public ResponseCarDTO update(String id,
+    public ResponseCarDTO update(UUID id,
                                 UpdateCarDTO updateCarDTO) {
-        Car car =
-                carRepository.edit(updateCarDTO.convertToEntity());
-        return new ResponseCarDTO(car);
+        Car car = updateCarDTO.convertToEntity();
+        car.setId(id);
+        Car updatedCar = carRepository.edit(car);
+        return new ResponseCarDTO(updatedCar);
     }
 
     public void delete(UUID id) {

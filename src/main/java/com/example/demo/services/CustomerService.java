@@ -29,10 +29,10 @@ public class CustomerService {
     }
 
     public ResponseCustomerDTO update(UUID id, UpdateCustomerDTO updateCustomerDTO) {
-        Customer costumer = updateCustomerDTO.convertToEntity();
-        costumer.setId(id);
-        Customer updateCostumer = customerRepository.edit(costumer);
-        return new ResponseCustomerDTO(updateCostumer);
+        Customer customer = updateCustomerDTO.convertToEntity();
+        customer.setId(id);
+        Customer updateCustomer = customerRepository.edit(customer);
+        return new ResponseCustomerDTO(updateCustomer);
     }
 
     public void delete(UUID id) {
