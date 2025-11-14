@@ -22,71 +22,64 @@ public class PurchaseRepository {
     public void save(Purchase purchase) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
             em.persist(purchase);
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
+        } finally {
+            em.close();
         }
     }
 
     public Purchase edit(Purchase purchase) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             Purchase updatedPurchase = em.find(Purchase.class, purchase.getId());
-
             if (updatedPurchase == null) {
                 throw new EntityNotFoundException("Purchase not found with id: " + purchase.getId());
             }
-
             if (purchase.getInstallment() != 0) updatedPurchase.setInstallment(purchase.getInstallment());
-
             tx.commit();
             return updatedPurchase;
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 
     public Optional<Purchase> findPurchaseById(UUID id) {
-
-        try (EntityManager em = emf.createEntityManager()) {
+        EntityManager em = emf.createEntityManager();
+        try {
             Purchase purchase = em.find(Purchase.class, id);
             return Optional.ofNullable(purchase);
+        } finally {
+            em.close();
         }
     }
 
     public void delete(UUID id) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             Purchase purchase = em.find(Purchase.class, id);
-
             if (purchase == null) {
                 throw new EntityNotFoundException("Purchase not found with id: " + id);
             }
-
             em.remove(purchase);
-
             tx.commit();
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 }

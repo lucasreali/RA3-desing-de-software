@@ -22,71 +22,64 @@ public class FranchiseRepository {
     public void save(Franchise franchise) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
             em.persist(franchise);
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
+        } finally {
+            em.close();
         }
     }
 
     public Franchise edit(Franchise franchise) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             Franchise updatedFranchise = em.find(Franchise.class, franchise.getId());
-
             if (updatedFranchise == null) {
                 throw new EntityNotFoundException("Franchise not found with id: " + franchise.getId());
             }
-
             if (franchise.getLocalization() != null) updatedFranchise.setLocalization(franchise.getLocalization());
-
             tx.commit();
             return updatedFranchise;
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 
     public Optional<Franchise> findFranchiseById(UUID id) {
-
-        try (EntityManager em = emf.createEntityManager()) {
+        EntityManager em = emf.createEntityManager();
+        try {
             Franchise franchise = em.find(Franchise.class, id);
             return Optional.ofNullable(franchise);
+        } finally {
+            em.close();
         }
     }
 
     public void delete(UUID id) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             Franchise franchise = em.find(Franchise.class, id);
-
             if (franchise == null) {
                 throw new EntityNotFoundException("Franchise not found with id: " + id);
             }
-
             em.remove(franchise);
-
             tx.commit();
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 }

@@ -22,72 +22,65 @@ public class PaymentMethodRepository {
     public void save(PaymentMethod paymentMethod) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
             em.persist(paymentMethod);
             tx.commit();
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
+        } finally {
+            em.close();
         }
     }
 
     public PaymentMethod edit(PaymentMethod paymentMethod) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             PaymentMethod updatedPaymentMethod = em.find(PaymentMethod.class, paymentMethod.getId());
-
             if (updatedPaymentMethod == null) {
                 throw new EntityNotFoundException("PaymentMethod not found with id: " + paymentMethod.getId());
             }
-
             if (paymentMethod.getName() != null) updatedPaymentMethod.setName(paymentMethod.getName());
             if (paymentMethod.getDescription() != null) updatedPaymentMethod.setDescription(paymentMethod.getDescription());
-
             tx.commit();
             return updatedPaymentMethod;
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 
     public Optional<PaymentMethod> findPaymentMethodById(UUID id) {
-
-        try (EntityManager em = emf.createEntityManager()) {
+        EntityManager em = emf.createEntityManager();
+        try {
             PaymentMethod paymentMethod = em.find(PaymentMethod.class, id);
             return Optional.ofNullable(paymentMethod);
+        } finally {
+            em.close();
         }
     }
 
     public void delete(UUID id) {
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-
-        try (em) {
+        try {
             tx.begin();
-
             PaymentMethod paymentMethod = em.find(PaymentMethod.class, id);
-
             if (paymentMethod == null) {
                 throw new EntityNotFoundException("PaymentMethod not found with id: " + id);
             }
-
             em.remove(paymentMethod);
-
             tx.commit();
-
         } catch (Exception e) {
             if (tx.isActive()) tx.rollback();
             throw e;
-
+        } finally {
+            em.close();
         }
     }
 }
